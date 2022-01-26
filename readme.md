@@ -1,0 +1,41 @@
+# Ray Tracing for the TI-84 CE
+
+A ray tracing engine written in C++/ASM for the Ti84 CE. This engine is capable of 
+
+- Scenes of arbitrary sphere and plane primatives
+- Difuse and reflective shading
+- Texture mapping
+- Dithering
+- Gamma correct rendering and HDR tone mapping
+- Global illumination through radiosity
+
+and can render the scene shown below (at standard resolution) in about 12 minutes.
+
+Check out [this video](https://www.youtube.com/watch?v=rY413t5fArw) for more information and to see the renderer in action.
+
+![Screenshot](screenshot.png)
+
+A sample scene rendered at 2x superscaling on a Ti84 CE.
+
+## Try It Yourself
+
+**Note:** Due to reliance on some eZ80 hardware instructions, this program can only be run on CE or later model calculators from the Ti84 family.
+
+1. Download the binary [here](bin/DEMO.8xp).
+2. Download the [CE C Standard Libraries](https://github.com/CE-Programming/libraries/releases/tag/v9.2.2).
+3. Load both onto your calculator using the [TI Connect™ CE software](https://education.ti.com/en/products/computer-software/ti-connect-ce-sw).
+4. Run the ASM program either with `Asm(DEMO)` or your favorite graphical shell.
+5. The renderer will take a few minutes to compute radiosity.
+6. When the graphics have completed rendering (usually takes about 12 minutes) press any key to exit to the OS.
+
+**Warning:** This program takes a while to complete, and once started cannot be interrupted until it is finished. Every once in a while, it can also freeze up. If for any reason you need to quit the program, **you will need to reset your calculator**, which will clear any unarchived data in RAM. Make sure you don't have anything unarchived that you wouldn't be willing to lose before running this program.
+
+## Building Locally
+This program appears to have some compatibility issues with the latest version of the toolchain, however version 9.1 still appears to be functional.
+
+---
+
+Looking for the older [TiBASIC version](https://github.com/TheScienceElf/TiBASIC-Raytracing), instead?
+
+This was written using the [CE Programming C SDK Toolchain](https://github.com/CE-Programming/toolchain).
+
