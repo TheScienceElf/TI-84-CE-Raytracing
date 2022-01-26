@@ -1,6 +1,6 @@
 # Ray Tracing for the TI-84 CE
 
-A ray tracing engine written in C++/ASM for the Ti84 CE. This engine is capable of 
+A ray tracing engine written in C++/ASM for the TI-84 CE. This engine is capable of 
 
 - Scenes of arbitrary sphere and plane primatives
 - Difuse and reflective shading
@@ -15,7 +15,7 @@ Check out [this video](https://www.youtube.com/watch?v=rY413t5fArw) for more inf
 
 ![Screenshot](screenshot.png)
 
-A sample scene rendered at 2x superscaling on a Ti84 CE.
+A sample scene rendered at double resolution.
 
 ## Try It Yourself
 
