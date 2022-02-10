@@ -2,7 +2,7 @@
 
 A ray tracing engine written in C++/ASM for the TI-84 CE. This engine is capable of 
 
-- Scenes of arbitrary sphere and plane primatives
+- Scenes of arbitrary sphere and plane primitives
 - Difuse and reflective shading
 - Texture mapping
 - Dithering
