@@ -21,19 +21,19 @@ _fp_mul:
   mlt hl
   ; Check if x is negative
   bit 7, a
-  jr z, x_is_positive
+  jr z, .x_is_positive
   ; Adjust upper result by -y
   sbc hl, bc
   or a, a
-x_is_positive:
+.x_is_positive:
 
   ld b, (iy + 5)
   ; Check if y is negative
   bit 7, b
-  jr z, y_is_positive
+  jr z, .y_is_positive
   ; Adjust upper result by -x
   sbc hl, de
-y_is_positive:
+.y_is_positive:
   ; Multiply BD
   ld e, b
   mlt de
@@ -143,10 +143,10 @@ _fp_sqr:
   mlt hl
   ; Check if x is negative
   bit 7, a
-  jr z, x_is_positive_sqr
+  jr z, .x_is_positive
   ; Adjust upper result by -x*2
   sbc hl, bc
-x_is_positive_sqr:
+.x_is_positive:
   add hl, hl
   ; Multiply AA (only low 8 bits of result needed, this is scaled by 2^36)
   ld d, a
