@@ -1,6 +1,5 @@
+section .text
 public _fp_mul
-public _fp_sqr
-
 ; Multiplies two Fixed24 values and returns the new value in HL
 _fp_mul:
   push ix
@@ -184,6 +183,8 @@ negate_end:
   ret
 
 
+section .text
+public _fp_sqr
 ; Computes the square of a Fixed24 value and returns the new value in HL
 ; This code is just a specialized case of the above code with a few conditions
 ; and redundant calculations removed  
