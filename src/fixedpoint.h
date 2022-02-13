@@ -138,10 +138,10 @@ void print_fixed(Fixed24 &x) {
  */
 Fixed24 sqrt(Fixed24 &x) {
 
-  // Convert to a float, take sqrt, then convert back
-  float f = x.n / (float)(1 << POINT);
+  Fixed24 out;
+  out.n = fp_sqrt(x.n);
 
-  return Fixed24(sqrtf(f));
+  return out;
 }
 
 /* Computes the square of a FP24 number.

@@ -212,3 +212,56 @@ _fp_sqr:
   ; Add with prior intermediate result, rounding to nearest
   adc hl, de
   ret
+
+
+section .text
+; Computes the square root of a Fixed24 value and returns the new value in HL
+; Assumes HL is unsigned since negative sqrt is undefined
+public _fp_sqrt
+_fp_sqrt:
+  ; Align iy to last byte of the argument in the stack
+  ld iy, 5
+  add iy, sp
+
+  ; Initialize de and hl to 0
+  sbc hl, hl
+  ex de, hl
+  sbc hl, hl
+
+  ; Iterate through the argument
+  ld c, 1 shl 6
+  call .process_byte
+  call .process_byte
+  ld b, 10
+  call .process_rest
+
+  ; Round to nearest
+  inc de
+  sbc hl, de
+  ex de, hl
+  ret nc
+  dec hl
+  ret
+
+.process_byte:
+  ld b, 4
+.process_rest:
+  ld a, (iy)
+  dec iy
+.loop:
+  sub a, c
+  sbc hl, de
+  jr nc, .skip
+  add a, c
+  adc hl, de
+.skip:
+  ccf
+  ex de, hl
+  adc hl, hl
+  ex de, hl
+  add a, a
+  adc hl, hl
+  add a, a
+  adc hl, hl
+  djnz .loop
+  ret
