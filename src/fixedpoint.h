@@ -129,7 +129,7 @@ void print_fixed(Fixed24 &x) {
     n = n >> 4;
   }
 
-  os_PutStrFull((const char*)&str);
+  os_PutStrFull(str);
   os_NewLine();
 }
 
