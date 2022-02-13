@@ -144,7 +144,7 @@ Fixed24 sqrt(Fixed24 &x) {
   return out;
 }
 
-/* Computes the square of a FP24 number.
+/* Computes the square of a Fixed24 number.
  *
  * This uses a specialized multiplication implementation and is preferable
  * over multiplying the number with itself
@@ -157,11 +157,10 @@ Fixed24 sqr(Fixed24 x) {
   return out;
 }
 
-/* Computes division of larger numbers by multiplying a by the reciprocal of b
- * This is slow and imprecise for certain values of b, so it should be replaced 
- * by an ASM routine
+/* Computes division of Fixed24 numbers.
  */
 Fixed24 div(Fixed24 a, Fixed24 b) {
+
   Fixed24 out;
   out.n = fp_div(a.n, b.n);
 
