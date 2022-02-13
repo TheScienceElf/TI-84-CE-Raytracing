@@ -221,6 +221,21 @@ public _fp_div
 _fp_div:
   ld iy, 3
   add iy, sp
+  xor a, a
+  sbc hl, hl
+  ld de, (iy + 0)
+  sbc hl, de
+  jp p, .numerator_is_negative
+  ex de, hl
+.numerator_is_negative:
+  ld b, 5
+.shift:
+  add hl, hl
+  rla
+  djnz .shift
+  push af
+  inc sp
+  push hl
   sbc hl, hl
   ld bc, (iy + 3)
   sbc hl, bc
@@ -228,34 +243,11 @@ _fp_div:
   push hl
   pop bc
 .denominator_is_negative:
+  dec sp
+  pop hl, de
   xor a, a
-  sbc hl, hl
-  ld de, (iy + 0)
-  sbc hl, de
-  jp m, .numerator_is_positive
-  ex de, hl
-.numerator_is_positive:
-  dec sp
-  push de
-  inc sp
-  pop hl
-  ex.s de, hl
-  ld h, l
-  ld l, 3
-.shift:
-  srl d
-  rr e
-  rr h
-  rra
-  dec l
-  jr nz, .shift
-  push hl
-  dec sp
-  pop hl
-  inc sp
-  ld l, 0
-  ld h, a
-  ld a, 23
+  ld l, a
+  ld a, 24
 .loop:
   adc hl, hl
   ex de, hl
@@ -267,11 +259,6 @@ _fp_div:
   ex de, hl
   dec a
   jr nz, .loop
-  adc hl, hl
-  ex de, hl
-  add hl, hl
-  add hl, bc
-  ex de, hl
   jr nc, .no_round
   inc hl
 .no_round:
