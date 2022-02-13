@@ -215,6 +215,79 @@ _fp_sqr:
 
 
 section .text
+; Divides two Fixed24 values and returns the new value in HL.
+; Only verified when the result does not overflow
+public _fp_div
+_fp_div:
+  ld iy, 3
+  add iy, sp
+  ld bc, (iy + 3)
+  bit 7, (iy + 5)
+  jr z, .denominator_is_positive
+  sbc hl, hl
+  sbc hl, bc
+  push hl
+  pop bc
+.denominator_is_positive:
+  xor a, a
+  ld de, (iy + 0)
+  bit 7, (iy + 2)
+  jr z, .numerator_is_positive
+  sbc hl, hl
+  sbc hl, de
+  ex de, hl
+.numerator_is_positive:
+  dec sp
+  push de
+  inc sp
+  pop hl
+  ex.s de, hl
+  ld h, l
+  ld l, 3
+.shift:
+  srl d
+  rr e
+  rr h
+  rra
+  dec l
+  jr nz, .shift
+  push hl
+  dec sp
+  pop hl
+  inc sp
+  ld l, 0
+  ld h, a
+  ld a, 23
+.loop:
+  add hl, hl
+  ex de, hl
+  inc e
+  adc hl, hl
+  sbc hl, bc
+  jr nc, .skip
+  add hl, bc
+  dec e
+.skip:
+  ex de, hl
+  dec a
+  jr nz, .loop
+  ex de, hl
+  add hl, hl
+  sbc hl, bc
+  ex de, hl
+  jr c, .no_round
+  inc hl
+.no_round:
+  ld a, (iy + 5)
+  xor a, (iy + 2)
+  ret p
+  ex de, hl
+  sbc hl, hl
+  sbc hl, de
+  ret
+
+
+section .text
 ; Computes the square root of a Fixed24 value and returns the new value in HL
 ; Assumes HL is unsigned since negative sqrt is undefined
 public _fp_sqrt

@@ -162,11 +162,10 @@ Fixed24 sqr(Fixed24 x) {
  * by an ASM routine
  */
 Fixed24 div(Fixed24 a, Fixed24 b) {
-  Fixed24 reciprocal;
+  Fixed24 out;
+  out.n = fp_div(a.n, b.n);
 
-  reciprocal.n = (((int32_t)(1 << POINT)) << POINT) / (int32_t)b.n;
-
-  return a * reciprocal;
+  return out;
 }
 
 /* Clamps the Fixed24 to be within the range 0 and 1 inclusively
