@@ -1,309 +1,324 @@
+section .text
 public _fp_mul
-public _fp_sqr
-
-; Multiplies two Fixed24 values and returns the new value in HL
+; Multiplies two Fixed24 values and returns the new value in HL.
+; We only need bits 12 to 35 of the result, but for simplicity we take the
+; bits 8 to 39 of the result and extract the middle 24 bits of that.
+; This means we do a 24x24->40 multiplication with the low 8 bits discarded.
 _fp_mul:
-  push ix
-  push bc
-  push iy
-
-  ld iy, $0
-
-  ; Align ix to below the stack. Zero-fill 48 bits
-  ld ix, $FFFFFA
-  add ix, sp
-  ld (ix), iy
-  ld (ix + $3), iy
-
   ; Align iy to the arguments in the stack
-  ld iy, $C
+  ld iy, 3
   add iy, sp
 
-  ; We use the E register to track whether we need to negate the result
-  ld e, $0
-
-  ; Take absolute value of the stack elements
-  bit 7, (iy + $2)
-  jp z, abs_x_end
-
-  inc e
-
-  ld a, $0
-  sub a, (iy + $0)
-  ld (iy + $0), a
-
-  ld a, $0
-  sbc a, (iy + $1)
-  ld (iy + $1), a
-
-  ld a, $0
-  sbc a, (iy + $2)
-  ld (iy + $2), a
-abs_x_end:
-  
-  bit 7, (iy + $5)
-  jp z, abs_y_end
-
-  inc e
-
-  ld a, $0
-  sub a, (iy + $3)
-  ld (iy + $3), a
-
-  ld a, $0
-  sbc a, (iy + $4)
-  ld (iy + $4), a
-
-  ld a, $0
-  sbc a, (iy + $5)
-  ld (iy + $5), a
-abs_y_end:
-
-
   ; Perform each of the component-wise multiplications
-  ; Multiply CF
-  ld h, (iy + $0)
-  ld l, (iy + $3)
+  ld de, (iy)
+  ld bc, (iy + 3)
+
+  ; First work with the multiplications scaled by 2^24 (only a 16-bit result)
+  ; Multiply AE
+  ld a, (iy + 2)
+  ld h, a
+  ld l, b
   mlt hl
+  ; Check if x is negative
+  bit 7, a
+  jr z, .x_is_positive
+  ; Adjust upper result by -y
+  sbc hl, bc
+  or a, a
+.x_is_positive:
 
-  ; Shift our answer over by 8 bits
-  ld (ix), hl
-  ld hl, (ix + $1)
+  ld b, (iy + 5)
+  ; Check if y is negative
+  bit 7, b
+  jr z, .y_is_positive
+  ; Adjust upper result by -x
+  sbc hl, de
+.y_is_positive:
+  ; Multiply BD
+  ld e, b
+  mlt de
+  add hl, de
 
-  ; Multiply BF
-  ld b, (iy + $1)
-  ld c, (iy + $3)
-  mlt bc
-  add hl, bc
+  ; Multiply AD (only low 8 bits of result needed, this is scaled by 2^36)
+  ld d, a
+  ld e, b
+  mlt de
+  ld d, a
+  ld a, e
+  add a, h
+  ld h, a
+  ; Save upper 16 bits of result
+  push hl
 
-  ; Multiply CE
-  ld b, (iy + $0)
-  ld c, (iy + $4)
-  mlt bc
-  add hl, bc
-
-  ; Shift our answer over by 8 bits
-  ld (ix + $1), hl
-  ld hl, (ix + $2)
-
+  ; Now work with the multiplications scaled by 2^16
   ; Multiply AF
-  ld b, (iy + $2)
-  ld c, (iy + $3)
-  mlt bc
-  add hl, bc
-
-  ; Multiply BE
-  ld b, (iy + $1)
-  ld c, (iy + $4)
-  mlt bc
-  add hl, bc
+  ld e, c
+  mlt de
 
   ; Multiply CD
-  ld b, (iy + $0)
-  ld c, (iy + $5)
-  mlt bc
-  add hl, bc
+  ld h, b
+  ld bc, (iy)
+  ld l, c
+  mlt hl
+  add hl, de
 
-  ; Shift our answer over by 8 bits
-  ld (ix + $2), hl
-  ld hl, (ix + $3)
+  ; Multiply BE
+  ld d, b
+  ld iy, (iy + 3)
+  ld e, iyh
+  mlt de
+  add hl, de
 
-  ; Multiply BD
-  ld b, (iy + $1)
-  ld c, (iy + $5)
-  mlt bc
-  add hl, bc
+  ; Combine with upper 16 bits left-shifted by 8
+  dec sp
+  pop de
+  inc sp
+  ld e, 0
+  add hl, de
 
-  ; Multiply AE
-  ld b, (iy + $2)
-  ld c, (iy + $4)
-  mlt bc
-  add hl, bc
-
-  ; Shift our answer over by 8 bits
-  ld (ix + $3), hl
-  ld hl, (ix + $4)
-
-  ; Multiply AD
-  ld b, (iy + $2)
-  ld c, (iy + $5)
-  mlt bc
-  add hl, bc
-
-  ld (ix + $4), hl
-
-  ; Grab the last 24 bits of our computation
-  ld hl, (ix + $2)
-  
-  ; Shift hl left by 4 bits
+  ; Go ahead and left-shift this intermediate result by 4
+  ; That puts it in the correct position for the final result
   add hl, hl
   add hl, hl
   add hl, hl
   add hl, hl
 
-  ld (ix + $2), hl
-  ld bc, (ix + $2)
-  
-  ; Grab one byte below our 24 bit chunk
-  ld hl, $0
-  ld l, (ix + $1)
-  
-  ; Shift hl right by 4 bits
-  srl l
-  srl l
-  srl l
-  srl l
+  ; Now work with the multiplications scaled by 2^8
+  ; Multiply CF and shift right by 8
+  ld d, c
+  ld a, b
+  ld b, iyl
+  mlt bc
+  ld c, b
+  ld b, e
 
+  ; Multiply CE
+  ld e, iyh
+  mlt de
+  ex de, hl
+  ; CE + (CF >> 8) cannot exceed 16 bits
   add hl, bc
 
-  ; Negate the result if necessary
-  bit 0, e
-  jp z, negate_end
+  ; Multiply BF
+  ld b, a
+  ld c, iyl
+  mlt bc
+  ; Detect carry from 16-bit addition
+  add.s hl, bc
 
-  ld (ix), hl
+  ; Shift right by 4 for the final result positioning
+  ld a, l
+  rr h
+  rra
+  srl h
+  rra
+  srl h
+  rra
+  srl h
+  rra
+  ld l, a
 
-  ld a, $0
-  sub a, (ix + $0)
-  ld (ix + $0), a
-
-  ld a, $0
-  sbc a, (ix + $1)
-  ld (ix + $1), a
-
-  ld a, $0
-  sbc a, (ix + $2)
-  ld (ix + $2), a
-
-  ld hl, (ix)
-
-negate_end:
-
-  pop iy
-  pop bc
-  pop ix
+  ; Add with prior intermediate result, rounding to nearest
+  adc hl, de
   ret
 
-
+section .text
+public _fp_sqr
 ; Computes the square of a Fixed24 value and returns the new value in HL
 ; This code is just a specialized case of the above code with a few conditions
 ; and redundant calculations removed  
 _fp_sqr:
-  push ix
-  push bc
-  push iy
+  ; Grab the parameter from the stack
+  ld hl, 3
+  add hl, sp
+  ld bc, (hl)
+  inc hl
+  inc hl
+  ld a, (hl)
 
-  ld iy, $0
+  ; First work with the multiplications scaled by 2^24 (only a 16-bit result)
+  ; Multiply AB*2
+  ld h, a
+  ld l, b
+  mlt hl
+  ; Check if x is negative
+  bit 7, a
+  jr z, .x_is_positive
+  ; Adjust upper result by -x*2
+  sbc hl, bc
+.x_is_positive:
+  add hl, hl
+  ; Multiply AA (only low 8 bits of result needed, this is scaled by 2^36)
+  ld d, a
+  ld e, a
+  mlt de
+  ld d, a
+  ld a, e
+  add a, h
+  ld h, a
+  ; Save upper 16 bits of result
+  push hl
 
-  ; Align ix to below the stack. Zero-fill 48 bits
-  ld ix, $FFFFFA
-  add ix, sp
-  ld (ix), iy
-  ld (ix + $3), iy
+  ; Now work with the multiplications scaled by 2^16
+  ; Multiply BB
+  ld h, b
+  ld l, b
+  mlt hl
+  ; Multiply AC*2
+  ld e, c
+  mlt de
+  add hl, de
+  add hl, de
 
-  ; Align iy to the arguments in the stack
-  ld iy, $C
+  ; Combine with upper 16 bits left-shifted by 8
+  dec sp
+  pop de
+  inc sp
+  xor a, a
+  ld e, a
+  add hl, de
+
+  ; Go ahead and left-shift this intermediate result by 4
+  ; That puts it in the correct position for the final result
+  add hl, hl
+  add hl, hl
+  add hl, hl
+  add hl, hl
+  ex de, hl
+
+  ; Now work with the multiplications scaled by 2^8
+  ; Multiply CC and shift right by 9
+  ld h, c
+  ld l, c
+  mlt hl
+  ld l, h
+  ld h, a
+  srl l
+
+  ; Multiply BC*2, shifted right by 1
+  mlt bc
+  add hl, bc
+
+  ; Shift right by 3 more for the final result positioning
+  ld a, l
+  srl h
+  rra
+  srl h
+  rra
+  srl h
+  rra
+  ld l, a
+
+  ; Add with prior intermediate result, rounding to nearest
+  adc hl, de
+  ret
+
+
+section .text
+; Divides two Fixed24 values and returns the new value in HL.
+; Only verified when the result does not overflow
+public _fp_div
+_fp_div:
+  ld iy, 3
+  add iy, sp
+  xor a, a
+  sbc hl, hl
+  ld de, (iy + 0)
+  sbc hl, de
+  jp p, .numerator_is_negative
+  ex de, hl
+.numerator_is_negative:
+  ld b, 5
+.shift:
+  add hl, hl
+  rla
+  djnz .shift
+  push af
+  inc sp
+  push hl
+  sbc hl, hl
+  ld bc, (iy + 3)
+  sbc hl, bc
+  jp p, .denominator_is_negative
+  push hl
+  pop bc
+.denominator_is_negative:
+  dec sp
+  pop hl, de
+  xor a, a
+  ld l, a
+  ld a, 24
+.loop:
+  adc hl, hl
+  ex de, hl
+  adc hl, hl
+  add hl, bc
+  jr c, .skip
+  sbc hl, bc
+.skip:
+  ex de, hl
+  dec a
+  jr nz, .loop
+  jr nc, .no_round
+  inc hl
+.no_round:
+  ld a, (iy + 5)
+  xor a, (iy + 2)
+  ret p
+  ex de, hl
+  sbc hl, hl
+  sbc hl, de
+  ret
+
+
+section .text
+; Computes the square root of a Fixed24 value and returns the new value in HL
+; Assumes HL is unsigned since negative sqrt is undefined
+public _fp_sqrt
+_fp_sqrt:
+  ; Align iy to last byte of the argument in the stack
+  ld iy, 5
   add iy, sp
 
-  ; Take absolute value of the stack elements
-  bit 7, (iy + $2)
-  jp z, abs_x_end_sqr
+  ; Initialize de and hl to 0
+  sbc hl, hl
+  ex de, hl
+  sbc hl, hl
 
-  ld a, $0
-  sub a, (iy + $0)
-  ld (iy + $0), a
+  ; Iterate through the argument
+  ld c, 1 shl 6
+  call .process_byte
+  call .process_byte
+  ld b, 10
+  call .process_rest
 
-  ld a, $0
-  sbc a, (iy + $1)
-  ld (iy + $1), a
+  ; Round to nearest
+  inc de
+  sbc hl, de
+  ex de, hl
+  ret nc
+  dec hl
+  ret
 
-  ld a, $0
-  sbc a, (iy + $2)
-  ld (iy + $2), a
-abs_x_end_sqr:
-
-
-  ; Perform each of the component-wise multiplications
-  ; Multiply CC
-  ld h, (iy + $0)
-  ld l, (iy + $0)
-  mlt hl
-
-  ; Shift our answer over by 8 bits
-  ld (ix), hl
-  ld hl, (ix + $1)
-
-  ; Multiply 2 * BC
-  ld b, (iy + $1)
-  ld c, (iy + $0)
-  mlt bc
-  add hl, bc
-  add hl, bc
-
-  ; Shift our answer over by 8 bits
-  ld (ix + $1), hl
-  ld hl, (ix + $2)
-
-  ; Multiply 2 * AC
-  ld b, (iy + $2)
-  ld c, (iy + $0)
-  mlt bc
-  add hl, bc
-  add hl, bc
-
-  ; Multiply BB
-  ld b, (iy + $1)
-  ld c, (iy + $1)
-  mlt bc
-  add hl, bc
-
-  ; Shift our answer over by 8 bits
-  ld (ix + $2), hl
-  ld hl, (ix + $3)
-
-  ; Multiply 2 * AB
-  ld b, (iy + $1)
-  ld c, (iy + $2)
-  mlt bc
-  add hl, bc
-  add hl, bc
-
-  ; Shift our answer over by 8 bits
-  ld (ix + $3), hl
-  ld hl, (ix + $4)
-
-  ; Multiply AA
-  ld b, (iy + $2)
-  ld c, (iy + $2)
-  mlt bc
-  add hl, bc
-
-  ld (ix + $4), hl
-
-  ; Grab the last 24 bits of our computation
-  ld hl, (ix + $2)
-  
-  ; Shift hl left by 4 bits
-  add hl, hl
-  add hl, hl
-  add hl, hl
-  add hl, hl
-
-  ld (ix + $2), hl
-  ld bc, (ix + $2)
-  
-  ; Grab one byte below our 24 bit chunk
-  ld hl, $0
-  ld l, (ix + $1)
-  
-  ; Shift hl right by 4 bits
-  srl l
-  srl l
-  srl l
-  srl l
-
-  add hl, bc
-
-  pop iy
-  pop bc
-  pop ix
+.process_byte:
+  ld b, 4
+.process_rest:
+  ld a, (iy)
+  dec iy
+.loop:
+  sub a, c
+  sbc hl, de
+  jr nc, .skip
+  add a, c
+  adc hl, de
+.skip:
+  ccf
+  ex de, hl
+  adc hl, hl
+  ex de, hl
+  add a, a
+  adc hl, hl
+  add a, a
+  adc hl, hl
+  djnz .loop
   ret

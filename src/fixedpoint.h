@@ -129,7 +129,7 @@ void print_fixed(Fixed24 &x) {
     n = n >> 4;
   }
 
-  os_PutStrFull((const char*)&str);
+  os_PutStrFull(str);
   os_NewLine();
 }
 
@@ -138,13 +138,13 @@ void print_fixed(Fixed24 &x) {
  */
 Fixed24 sqrt(Fixed24 &x) {
 
-  // Convert to a float, take sqrt, then convert back
-  float f = x.n / (float)(1 << POINT);
+  Fixed24 out;
+  out.n = fp_sqrt(x.n);
 
-  return Fixed24(sqrtf(f));
+  return out;
 }
 
-/* Computes the square of a FP24 number.
+/* Computes the square of a Fixed24 number.
  *
  * This uses a specialized multiplication implementation and is preferable
  * over multiplying the number with itself
@@ -157,16 +157,14 @@ Fixed24 sqr(Fixed24 x) {
   return out;
 }
 
-/* Computes division of larger numbers by multiplying a by the reciprocal of b
- * This is slow and imprecise for certain values of b, so it should be replaced 
- * by an ASM routine
+/* Computes division of Fixed24 numbers.
  */
 Fixed24 div(Fixed24 a, Fixed24 b) {
-  Fixed24 reciprocal;
 
-  reciprocal.n = (((int32_t)(1 << POINT)) << POINT) / (int32_t)b.n;
+  Fixed24 out;
+  out.n = fp_div(a.n, b.n);
 
-  return a * reciprocal;
+  return out;
 }
 
 /* Clamps the Fixed24 to be within the range 0 and 1 inclusively
