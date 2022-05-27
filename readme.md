@@ -19,10 +19,10 @@ A sample scene rendered at double resolution.
 
 ## Try It Yourself
 
-**Note:** Due to reliance on some eZ80 hardware instructions, this program can only be run on CE or later model calculators from the Ti84 family.
+**Note:** Due to reliance on some eZ80 hardware instructions, this program can only be run on CE or later model calculators from the TI-84 family.
 
 1. Download the binary [here](bin/DEMO.8xp).
-2. Download the [CE C Standard Libraries](https://github.com/CE-Programming/libraries/releases/tag/v9.2.2).
+2. Download the [CE Libraries](https://github.com/CE-Programming/libraries/releases/latest).
 3. Load both onto your calculator using the [TI Connect™ CE software](https://education.ti.com/en/products/computer-software/ti-connect-ce-sw).
 4. Run the ASM program either with `Asm(DEMO)` or your favorite graphical shell.
 5. The renderer will take a few minutes to compute radiosity.
@@ -31,11 +31,13 @@ A sample scene rendered at double resolution.
 **Warning:** This program takes a while to complete, and once started cannot be interrupted until it is finished. Every once in a while, it can also freeze up. If for any reason you need to quit the program, **you will need to reset your calculator**, which will clear any unarchived data in RAM. Make sure you don't have anything unarchived that you wouldn't be willing to lose before running this program.
 
 ## Building Locally
-This program appears to have some compatibility issues with the latest version of the toolchain, however version 9.1 still appears to be functional.
+
+1. Install the latest [CE C/C++ Toolchain](https://github.com/CE-Programming/toolchain/releases/latest).
+2. Run the `make` command
 
 ---
 
-Looking for the older [TiBASIC version](https://github.com/TheScienceElf/TiBASIC-Raytracing), instead?
+Looking for the older [TI-BASIC version](https://github.com/TheScienceElf/TiBASIC-Raytracing), instead?
 
-This was written using the [CE Programming C SDK Toolchain](https://github.com/CE-Programming/toolchain).
+This was written using the [CE C/C++ Toolchain](https://github.com/CE-Programming/toolchain).
 
